@@ -1,3 +1,4 @@
+from django.contrib.auth.decorators import permission_required
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import render
 
@@ -24,15 +25,22 @@ def show_entries(request):
         form = BlogForm()
 
     return render(request, "my_entries.html", {"todos": blogEntry.objects.filter(owner=request.user.id),
-                                             "tags":Tag.objects.all(),
+                                             "tags": Tag.objects.all(),
                                              "form": form})
-
 
 def get_entry(request, entry_id):
     try:
         entry = blogEntry.objects.get(id=entry_id)
-        if request.user.id != todo.owner.id:
+        if request.user.id != entry.owner.id:
             raise PermissionDenied
         return render(request, "detailed_entry.html", {"todo": entry})
     except blogEntry.DoesNotExist:
         raise Http404("We don't have any.")
+
+@permission_required('is_superuser')
+def show_all_entries(request):
+    return render(request, "my_entries.html", {"todos": blogEntry.objects.all()})
+
+@permission_required('is_superuser')
+def show_all_entries_from_user(request, userId):
+    return render(request, "my_entries.html", {"todos": blogEntry.objects.filter(owner=userId)})
